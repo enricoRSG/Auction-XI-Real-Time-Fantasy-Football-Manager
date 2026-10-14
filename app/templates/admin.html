@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Battitore · {{ auction.name }}{% endblock %}
+{% block content %}
+<div id="admin-app" data-auction-id="{{ auction.id }}" data-admin-token="{{ admin_token }}" data-auctioneer-team-id="{{ auctioneer_team.id if auctioneer_team else '' }}" class="admin-page">
+    <header class="admin-topbar">
+        <div><p class="eyebrow">Battitore / Admin</p><h1>{{ auction.name }}</h1></div>
+        <div class="admin-status"><span id="admin-phase" class="phase-chip">ASTA LIVE</span><span id="admin-connection-dot" class="status-dot online"></span><span id="admin-connection-label">Sincronizzato</span></div>
+    </header>
+
+    <main class="admin-grid">
+        <section class="admin-main panel">
+            <div class="section-title">GIOCATORE IN ASTA</div>
+            <div id="admin-current-player" class="admin-current-player">Nessun giocatore selezionato</div>
+            <div id="admin-timer" class="timer-label"></div>
+            <div id="admin-dealer" class="helper"></div>
+            <div class="admin-bid"><span>Offerta</span><strong id="admin-current-bid">0</strong></div>
+            <div class="leader">Leader: <strong id="admin-leader">—</strong></div>
+            <div class="section-title spaced">ULTIME 3 OFFERTE</div>
+            <div id="admin-last-bids"></div>
+            <div class="admin-actions">
+                <button id="award-button" class="primary big" type="button">AGGIUDICA</button>
+                <button id="rollback-button" class="danger-button" type="button">ANNULLA ULTIMA AGGIUDICAZIONE</button>
+                <button id="cancel-call-button" class="danger-button" type="button">ANNULLA CHIAMATA</button>
+                <button id="pause-button" class="secondary-button" type="button">PAUSA</button>
+                <button id="save-now-button" class="secondary-button" type="button">SALVA ORA</button>
+            </div>
+            <div id="save-status" class="helper" role="status"></div>
+            <details><summary>Checkpoint disponibili</summary><div id="checkpoint-list" class="helper"></div></details>
+        </section>
+
+        {% if auctioneer_team %}
+        <section class="panel auctioneer-bid-panel">
+            <div class="section-title">LA MIA SQUADRA · BATTITORE</div>
+            <div class="auctioneer-team-head">
+                <div><strong id="auctioneer-team-name">{{ auctioneer_team.name }}</strong><span class="pill">Battitore</span></div>
+                <a class="mini-link" href="/auction/{{ auction.id }}/team/{{ auctioneer_team.id }}/{{ auctioneer_team.access_token }}" target="_blank" rel="noopener">Apri La mia rosa</a>
+            </div>
+            <div class="auctioneer-team-summary">
+                <div><span>Crediti residui</span><strong id="auctioneer-credits">{{ auctioneer_team.credits_remaining }}</strong></div>
+                <div><span>Rosa</span><strong id="auctioneer-slots">P0 · D0 · C0 · A0</strong></div>
+            </div>
+            <div id="auctioneer-leader-note" class="helper">Nessun giocatore in asta.</div>
+            <div class="quick-buttons admin-quick">
+                <button data-self-step="1" type="button">+1</button>
+                <button data-self-step="5" type="button">+5</button>
+                <button data-self-step="10" type="button">+10</button>
+            </div>
+            <div class="custom-offer">
+                <input id="self-amount" type="number" min="1" placeholder="Offerta libera">
+                <button id="self-submit" type="button">OFFRI</button>
+            </div>
+            <div id="self-bid-message" class="message hidden"></div>
+        </section>
+        {% endif %}
+
+        <section class="panel">
+            <div class="section-title">PROSSIMO GIOCATORE</div>
+            <div id="call-mode-note" class="helper"></div>
+            <div id="manual-call-controls">
+                <div class="search-line"><input id="admin-player-search" placeholder="Cerca giocatore libero…"><button id="admin-player-search-btn" type="button">Cerca</button></div>
+                <div id="admin-player-results" class="result-list"></div>
+            </div>
+            <div id="random-call-controls" class="hidden random-controls">
+                <button id="next-random-button" class="primary big" type="button">PROSSIMO GIOCATORE</button>
+                <button id="advance-role-button" class="secondary-button hidden" type="button">PASSA AL RUOLO SUCCESSIVO</button>
+                <div id="active-role-label" class="helper"></div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-title">OFFERTA MANUALE</div>
+            <p class="helper">Per squadre che usano carta e penna.</p>
+            <label>Squadra<select id="manual-team">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></label>
+            <div class="quick-buttons admin-quick">
+                <button data-admin-step="1" type="button">+1</button>
+                <button data-admin-step="5" type="button">+5</button>
+                <button data-admin-step="10" type="button">+10</button>
+            </div>
+            <div class="custom-offer"><input id="manual-amount" type="number" min="1"><button id="manual-submit" type="button">REGISTRA</button></div>
+            <div id="admin-message" class="message hidden"></div>
+        </section>
+
+        <section class="panel">
+        <div class="section-title">PRESENZE / COLLEGAMENTI</div>
+        <p class="helper">Mostra solo i dispositivi collegati di recente. Ogni squadra può avere più accessi contemporanei.</p>
+        <div id="admin-presence-list"></div>
+    </section>
+
+    <section class="panel admin-teams-panel">
+            <div class="section-title">ACCESSI SQUADRE</div><p class="helper">Ogni link può essere usato contemporaneamente da più dispositivi della stessa squadra.</p><div id="team-access-links"></div>
+        </section>
+
+        <section class="panel admin-teams-panel">
+            <div class="section-title">SITUAZIONE SQUADRE</div>
+            <div id="admin-teams"></div>
+            <h2>Rose e correzioni admin</h2>
+            <label>Squadra<select id="correction-team">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></label>
+            <div id="admin-roster" class="result-list"></div>
+            <label>Operazione<select id="correction-action"><option value="assign">Aggiungi giocatore</option><option value="remove">Rimuovi giocatore</option><option value="price">Correggi prezzo</option><option value="transfer">Sposta nella squadra selezionata</option><option value="credits">Correggi crediti residui</option><option value="recalculate">Ricalcola squadra / REGOLARIZZA</option></select></label>
+            <label>Cerca giocatore<input id="correction-search" placeholder="Nome giocatore"><button id="correction-search-button" type="button">Cerca</button></label>
+            <div id="correction-results" class="result-list"></div>
+            <input id="correction-player" type="hidden">
+            <p id="correction-selected" class="helper">Seleziona un giocatore dalla rosa o dalla ricerca.</p>
+            <div class="search-line"><label>Prezzo<input id="correction-price" type="number" min="1" value="1"></label><label>Crediti residui<input id="correction-credits" type="number" value="0"></label></div>
+            <label class="toggle-line"><input id="correction-force" type="checkbox"> Forza comunque (stato non valido o rimozione ban)</label>
+            <div class="admin-actions"><button id="correction-submit" class="primary" type="button">APPLICA CORREZIONE</button><button id="correction-recalculate" type="button">RICALCOLA STATO SQUADRA</button><button id="undo-correction" class="danger-button" type="button">ANNULLA ULTIMA CORREZIONE ADMIN</button></div>
+            <div id="correction-message" class="message hidden" role="status"></div>
+            <div id="dealer-controls" class="hidden"><label>Partecipante di turno<select id="dealer-team">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></label><button id="dealer-set" type="button">CORREGGI TURNO</button><p>Ordine dei turni (trascina con i pulsanti ↑ e ↓ prima di applicare)</p><div id="dealer-order"></div><button id="dealer-order-save" type="button">APPLICA ORDINE E TURNO</button></div>
+        </section>
+
+        <section class="panel admin-teams-panel">
+            <div class="section-title">REGISTRO EVENTI</div>
+            <p class="helper">Traccia offerte, aggiudicazioni, svincoli e correzioni amministrative.</p>
+            <div id="admin-event-log" class="event-log"></div>
+        </section>
+
+        <section class="panel admin-teams-panel">
+            <div class="section-title">CHIUSURA ASTA / RAPPEZZAMENTI</div>
+            <p class="helper">Sequenza: concludi asta → riepilogo svincolati → rappezzamenti → rose definitive → due export → reset.</p>
+            <div class="admin-actions wrap-actions">
+                <button id="conclude-live-button" class="secondary-button" type="button">CONCLUDI ASTA</button>
+                <button id="start-patching-button" class="secondary-button" type="button">AVVIA RAPPEZZAMENTI</button>
+                <button id="conclude-patching-button" class="primary" type="button">CONCLUDI RAPPEZZAMENTI</button>
+            </div>
+            <div id="conclusion-summary" class="message hidden" role="status"></div>
+            <button id="confirm-conclusion" class="primary hidden" type="button">CONFERMA CONCLUSIONE ASTA</button>
+            <div id="free-ranked-panel" class="hidden">
+                <div class="section-title spaced">RIEPILOGO SVINCOLATI · QUOTAZIONE DECRESCENTE</div>
+                <div class="search-line"><select id="free-role-filter"><option value="">Tutti i ruoli</option><option>P</option><option>D</option><option>C</option><option>A</option></select><button id="refresh-free-button" type="button">Aggiorna</button></div>
+                <div id="free-ranked-list" class="result-list"></div>
+            </div>
+            <div id="patch-admin-panel" class="hidden">
+                <div class="section-title spaced">REGISTRA RAPPEZZAMENTO</div>
+                <label>Squadra<select id="patch-team">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></label>
+                <div class="search-line"><input id="patch-owned-search" placeholder="ID giocatore da svincolare"><button id="patch-release-button" type="button">SVINCOLA</button></div>
+                <div class="search-line"><input id="patch-move-id" placeholder="ID movimento"><input id="patch-new-player-id" placeholder="ID nuovo giocatore"><input id="patch-price" type="number" min="1" value="1"><button id="patch-assign-button" type="button">ASSEGNA</button></div>
+                <p class="helper">La mini-asta dei rappezzamenti si svolge a voce; qui il battitore registra soltanto il risultato.</p>
+            </div>
+            <div id="final-export-panel" class="hidden">
+                <div class="section-title spaced">EXPORT FINALI</div>
+                <div class="admin-actions wrap-actions">
+                    <a id="export-leghe-link" class="button-link primary" href="#">CSV LEGHE FANTACALCIO</a>
+                    <a id="export-archive-link" class="button-link secondary-button" href="#">ARCHIVIO ROSE + CREDITI</a>
+                    <button id="final-reset-button" class="danger-button" type="button">CHIUDI DEFINITIVAMENTE E RESETTA</button>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/admin.js"></script>{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} · Asta live{% endblock %}
+{% block content %}
+<div id="participant-app" data-auction-id="{{ auction.id }}" data-team-id="{{ team.id }}" data-access-token="{{ access_token }}" data-participation-mode="{{ auction.participation_mode }}" class="mobile-app">
+    <header class="app-header">
+        <div><span id="connection-dot" class="status-dot online"></span><span id="connection-label">Sincronizzato</span></div>
+        <strong>ASTA LIVE</strong>
+        <button id="sound-toggle" class="text-button" type="button">Suoni OFF</button>
+    </header>
+
+    <main class="app-content">
+        <section class="panel live-player-panel">
+            <div id="no-player" class="empty-state">In attesa del prossimo giocatore…</div>
+            <div id="player-active" class="hidden">
+                <h1 id="player-name">—</h1>
+                <div class="player-meta"><span id="player-team">—</span><span>·</span><strong id="player-role">—</strong><span>· Qt.A <strong id="player-quotation">—</strong></span></div>
+                <div class="divider"></div>
+                <div class="small-label">Offerta attuale</div>
+                <div id="current-bid" class="hero-number">0</div>
+                <div id="opening-minimum-label" class="helper mini hidden"></div>
+                <div class="leader">Leader: <strong id="leader-name">—</strong></div>
+            </div>
+        </section>
+
+        <section id="remote-panel" class="panel hidden">
+            <div id="remote-dealer" class="section-title"></div>
+            <div id="participant-timer" class="timer-label"></div>
+            <button id="remote-choose" type="button">SCEGLI GIOCATORE</button>
+            <button id="remote-pass" type="button">PASSA</button>
+            <div id="remote-picker" class="hidden">
+                <div class="search-line"><input id="remote-search" placeholder="Nome giocatore libero"><select id="remote-role"><option value="">Tutti i ruoli</option><option>P</option><option>D</option><option>C</option><option>A</option></select></div>
+                <div class="search-line"><input id="remote-club" placeholder="Squadra Serie A"><button id="remote-search-button" type="button">Cerca</button></div>
+                <div id="remote-results" class="result-list"></div>
+            </div>
+            <div id="remote-message" class="message hidden" role="status"></div>
+        </section>
+
+        <section class="panel">
+            <div class="section-title">ULTIME 3 OFFERTE</div>
+            <div id="last-bids"></div>
+        </section>
+
+        <section class="panel" id="offer-panel">
+            <div class="section-title">OFFRI</div>
+            <div class="quick-buttons">
+                <button data-step="1" type="button">+1</button>
+                <button data-step="5" type="button">+5</button>
+                <button data-step="10" type="button">+10</button>
+            </div>
+            <label>Offerta personalizzata</label>
+            <div class="custom-offer">
+                <input id="custom-offer" type="number" inputmode="numeric" min="1">
+                <button id="custom-offer-button" type="button">OFFRI</button>
+            </div>
+            <div id="bid-message" class="message hidden"></div>
+        </section>
+
+        <section class="panel compact-summary">
+            <div><span class="small-label">Crediti residui</span><strong id="credits-remaining">{{ team.credits_remaining }}</strong></div>
+            <div id="slot-summary" class="slot-summary"></div>
+        </section>
+
+        <section class="participant-toolbar">
+            <button id="presence-button" class="presence-chip" type="button">In presenza</button>
+            <span class="helper mini">Modalità dell’asta, scelta dall’admin</span>
+        </section>
+
+        <section id="roster-view" class="panel hidden"></section>
+        <section id="search-view" class="panel hidden">
+            <div class="search-line"><input id="player-search" placeholder="Cerca giocatore…"><button id="search-button" type="button">Cerca</button></div>
+            <div id="search-results"></div>
+        </section>
+        <section id="teams-view" class="panel hidden">
+            <div class="section-title">SITUAZIONE SQUADRE</div>
+            <p id="teams-visibility-note" class="helper"></p>
+            <div id="teams-public-list" class="teams-public-list"></div>
+            <div id="public-roster" class="result-list"></div>
+        </section>
+        <section id="post-auction-view" class="panel hidden">
+            <div class="section-title">RIEPILOGO SVINCOLATI</div>
+            <p class="helper">Disponibile solo dopo la conclusione dell'asta principale, prima e durante i rappezzamenti.</p>
+            <div class="search-line"><select id="participant-free-role"><option value="">Tutti</option><option>P</option><option>D</option><option>C</option><option>A</option></select><button id="participant-free-refresh" type="button">Aggiorna</button></div>
+            <div id="participant-free-list"></div>
+        </section>
+    </main>
+
+    <nav class="app-nav">
+        <button data-view="roster" type="button">La mia rosa</button>
+        <button data-view="search" type="button">Cerca giocatore</button>
+        <button data-view="live" class="active" type="button">Asta live</button>
+        <button data-view="teams" type="button">Rose squadre</button>
+    </nav>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/participant.js"></script>{% endblock %}

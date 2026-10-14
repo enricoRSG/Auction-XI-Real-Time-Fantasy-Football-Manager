@@ -1,0 +1,10 @@
+.venv
+.runtime_packages
+**/__pycache__
+.pytest_cache
+app/data
+qa-preview
+tests
+*.zip
+.git
+.env

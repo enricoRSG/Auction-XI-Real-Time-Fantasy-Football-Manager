@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Setup asta{% endblock %}
+{% block content %}
+<main class="setup-page">
+    <section class="setup-card">
+        <div class="setup-header">
+            <p class="eyebrow">Auction XI – Real-Time Fantasy Football Manager</p>
+            <h1>Configura una nuova asta</h1>
+            <p>V1 Classic · tutti i parametri restano modificabili per adattarsi alla lega.</p>
+        </div>
+
+        <form id="setup-form" enctype="multipart/form-data">
+            {% if auction and allow_resume %}
+            <section class="resume-card">
+                <h2>Riprendi asta in corso</h2>
+                <p>{{ auction.name }} · {{ auction.team_count }} squadre · {{ auction.status.replace('_', ' ') }}</p>
+                <p>Ultimo checkpoint: <time class="local-time" datetime="{{ saved_at or '' }}">{{ saved_at or 'Database salvato' }}</time></p>
+                <a class="button-link primary" href="/auction/{{ auction.id }}/admin/{{ auction.admin_token }}">RIPRENDI ASTA IN CORSO</a>
+            </section>
+            {% endif %}
+            <div class="setup-grid">
+                <label>Svolgimento<select name="participation_mode" id="participation-mode"><option value="presence">In presenza</option><option value="remote">Da remoto</option></select></label>
+                <label>Chiave creazione asta online (se richiesta)<input id="setup-key" type="password" autocomplete="off"></label>
+                <label>Nome asta<input name="name" value="Asta Fantacalcio" required></label>
+                <label>Modalità<select name="mode" disabled><option>Classic</option></select></label>
+                <label>Tipo battitore<select name="auctioneer_type" id="auctioneer_type" required><option value="participant">Battitore partecipante</option><option value="external">Battitore esterno</option></select></label>
+                <label>Numero squadre<input name="team_count" id="team_count" type="number" min="2" value="10" required></label>
+                <label>Crediti iniziali<input name="starting_credits" type="number" min="1" value="500" required></label>
+                <label>Modalità chiamata<select name="call_mode"><option value="manual">Manuale</option><option value="random_role">Random ruolo per ruolo</option><option value="random_total">Random totale</option></select></label>
+            </div>
+            <p id="mode-help" class="helper">In presenza: server sul PC e dispositivi sulla stessa rete. Da remoto: apri il server online HTTPS; ordine iniziale dei turni uguale all’elenco squadre.</p>
+
+            <h2>Composizione rosa</h2>
+            <div class="setup-grid four">
+                <label>Portieri<input name="slots_p" type="number" min="0" value="3"></label>
+                <label>Difensori<input name="slots_d" type="number" min="0" value="8"></label>
+                <label>Centrocampisti<input name="slots_c" type="number" min="0" value="8"></label>
+                <label>Attaccanti<input name="slots_a" type="number" min="0" value="6"></label>
+            </div>
+
+            <h2>Svincoli durante l'asta</h2>
+            <div class="setup-grid four">
+                <label>P<input name="release_p" type="number" min="0" value="1"></label>
+                <label>D<input name="release_d" type="number" min="0" value="2"></label>
+                <label>C<input name="release_c" type="number" min="0" value="2"></label>
+                <label>A<input name="release_a" type="number" min="0" value="2"></label>
+            </div>
+
+            <h2>Regole economiche</h2>
+            <div class="setup-grid">
+                <label>Regola base d'asta<select name="base_rule"><option value="fixed">Valore fisso</option><option value="quotation">Quotazione listone</option><option value="half_quotation">50% quotazione</option><option value="custom_percentage">Percentuale quotazione</option></select></label>
+                <label>Valore / percentuale<input name="base_value" type="number" min="1" value="1"></label>
+                <label class="toggle-line"><input name="allow_overspend" type="checkbox" value="true"> Consenti sforamento temporaneo</label>
+                <label>Rappezzamenti max<input name="patch_limit" type="number" min="0" value="3"></label>
+            </div>
+
+            <h2>Squadre</h2>
+            <p class="helper">Una squadra per riga. Devono essere esattamente tante quante indicate sopra.</p>
+            <textarea name="team_names" id="team_names" rows="10" required>Squadra 1\nSquadra 2\nSquadra 3\nSquadra 4\nSquadra 5\nSquadra 6\nSquadra 7\nSquadra 8\nSquadra 9\nSquadra 10</textarea>
+
+            <div id="auctioneer-team-wrap">
+                <label>Squadra del battitore (0 = prima squadra)
+                    <input name="auctioneer_team_index" type="number" min="0" value="0">
+                </label>
+            </div>
+
+            <h2>Listone</h2>
+            <label class="upload-box">Carica Excel Leghe Fantacalcio (.xlsx)
+                <input type="file" name="listone" accept=".xlsx" required>
+            </label>
+
+            <div id="setup-error" class="message error hidden"></div>
+            <button class="primary big" type="submit">Crea asta</button>
+        </form>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/js/setup.js"></script>{% endblock %}
